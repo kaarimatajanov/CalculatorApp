@@ -7,9 +7,11 @@ class Calculator:
         self.root.title("Calculator")
         self.root.geometry("300x400")
         self.root.resizable(False, False)
+        self.root.configure(bg="#f0f0f0")  # Light gray background
 
         # Entry widget to display input/output
-        self.entry = tk.Entry(root, width=20, font=("Arial", 16), bd=5, insertwidth=2)
+        self.entry = tk.Entry(root, width=20, font=("Arial", 16), bd=5, insertwidth=2,
+                              bg="#ffffff", fg="#000000")
         self.entry.grid(row=0, column=0, columnspan=4, padx=10, pady=10)
 
         # Buttons
@@ -27,7 +29,9 @@ class Calculator:
         col = 0
         for button in button_list:
             cmd = lambda x=button: self.click(x)
+            bg_color = "#d9d9d9" if button in '0123456789.' else "#ff9500"  # Orange for operators
             tk.Button(self.root, text=button, width=5, height=2, font=("Arial", 14),
+                     bg=bg_color, fg="#000000", activebackground="#bfbfbf",
                      command=cmd).grid(row=row, column=col, padx=5, pady=5)
             col += 1
             if col > 3:
@@ -36,9 +40,11 @@ class Calculator:
 
         # Clear button
         tk.Button(self.root, text="C", width=5, height=2, font=("Arial", 14),
+                  bg="#ff3b30", fg="#ffffff", activebackground="#cc2e26",
                   command=self.clear).grid(row=row, column=col, padx=5, pady=5)
         # Backspace button
         tk.Button(self.root, text="⌫", width=5, height=2, font=("Arial", 14),
+                  bg="#ff3b30", fg="#ffffff", activebackground="#cc2e26",
                   command=self.backspace).grid(row=row, column=col+1, padx=5, pady=5)
 
     def click(self, char):
