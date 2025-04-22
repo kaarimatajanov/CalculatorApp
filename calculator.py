@@ -37,6 +37,9 @@ class Calculator:
         # Clear button
         tk.Button(self.root, text="C", width=5, height=2, font=("Arial", 14),
                   command=self.clear).grid(row=row, column=col, padx=5, pady=5)
+        # Backspace button
+        tk.Button(self.root, text="⌫", width=5, height=2, font=("Arial", 14),
+                  command=self.backspace).grid(row=row, column=col+1, padx=5, pady=5)
 
     def click(self, char):
         if char == '=':
@@ -52,6 +55,11 @@ class Calculator:
 
     def clear(self):
         self.entry.delete(0, tk.END)
+
+    def backspace(self):
+        current = self.entry.get()
+        if current:
+            self.entry.delete(len(current)-1, tk.END)
 
 if __name__ == "__main__":
     root = tk.Tk()
