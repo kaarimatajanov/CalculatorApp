@@ -59,7 +59,7 @@ class Calculator:
                 col += 1
             row += 1
 
-        # Кнопка очистки
+        # Кнопка очистки ввода
         tk.Button(self.main_frame, text="C", width=5, height=2, font=("Helvetica", 12, "bold"),
                   bg="#ff3b30", fg="#000000", activebackground="#cc2e26", bd=0, relief="flat",
                   command=self.clear).grid(row=row, column=0, padx=5, pady=5)
@@ -67,6 +67,10 @@ class Calculator:
         tk.Button(self.main_frame, text="⌫", width=5, height=2, font=("Helvetica", 12, "bold"),
                   bg="#ff3b30", fg="#000000", activebackground="#cc2e26", bd=0, relief="flat",
                   command=self.backspace).grid(row=row, column=1, padx=5, pady=5)
+        # Кнопка очистки истории
+        tk.Button(self.main_frame, text="CH", width=5, height=2, font=("Helvetica", 12, "bold"),
+                  bg="#ff3b30", fg="#000000", activebackground="#cc2e26", bd=0, relief="flat",
+                  command=self.clear_history).grid(row=row, column=2, padx=5, pady=5)
 
     def click(self, char):
         if char == '=':
@@ -101,6 +105,11 @@ class Calculator:
         if current:
             self.entry.delete(len(current)-1, tk.END)
 
+    def clear_history(self):
+        self.history.configure(state='normal')
+        self.history.delete(1.0, tk.END)
+        self.history.configure(state='disabled')
+
     def key_press(self, event):
         key = event.char
         if key in '0123456789.+-*/%^()':
@@ -111,6 +120,8 @@ class Calculator:
             self.backspace()
         elif key.lower() == 'c':
             self.clear()
+        elif key.lower() == 'h':  # Очистка истории по клавише 'h'
+            self.clear_history()
 
 if __name__ == "__main__":
     root = tk.Tk()
