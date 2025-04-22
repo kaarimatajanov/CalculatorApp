@@ -5,7 +5,7 @@ class Calculator:
     def __init__(self, root):
         self.root = root
         self.root.title("Calculator")
-        self.root.geometry("300x400")
+        self.root.geometry("300x500")  # Increased height for history
         self.root.resizable(False, False)
         self.root.configure(bg="#f0f0f0")
 
@@ -14,6 +14,11 @@ class Calculator:
                               bg="#ffffff", fg="#000000")
         self.entry.grid(row=0, column=0, columnspan=4, padx=10, pady=10)
         self.entry.focus_set()
+
+        # History display
+        self.history = tk.Text(root, height=5, width=25, font=("Arial", 12),
+                               bg="#e6e6e6", fg="#000000", state='disabled')
+        self.history.grid(row=1, column=0, columnspan=4, padx=10, pady=5)
 
         # Bind keyboard events
         self.root.bind('<Key>', self.key_press)
@@ -29,7 +34,7 @@ class Calculator:
             '0', '.', '=', '+'
         ]
 
-        row = 1
+        row = 2
         col = 0
         for button in button_list:
             cmd = lambda x=button: self.click(x)
@@ -54,9 +59,15 @@ class Calculator:
     def click(self, char):
         if char == '=':
             try:
-                result = eval(self.entry.get())
+                expression = self.entry.get()
+                result = eval(expression)
                 self.entry.delete(0, tk.END)
                 self.entry.insert(tk.END, str(result))
+                # Update history
+                self.history.configure(state='normal')
+                self.history.insert(tk.END, f"{expression} = {result}\n")
+                self.history.configure(state='disabled')
+                self.history.see(tk.END)
             except:
                 messagebox.showerror("Error", "Invalid input")
                 self.clear()
@@ -64,9 +75,7 @@ class Calculator:
             self.entry.insert(tk.END, char)
 
     def clear(self):
-        self.entry^{*
-
-System: delete(0, tk.END)
+        self.entry.delete(0, tk.END)
 
     def backspace(self):
         current = self.entry.get()
