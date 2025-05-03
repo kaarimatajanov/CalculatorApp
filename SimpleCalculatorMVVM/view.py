@@ -1,26 +1,45 @@
 import tkinter as tk
 from tkinter import messagebox, font
-from viewmodel import CalculatorViewModel
 from PIL import Image, ImageTk
 import pygame
 import os
 import json
 import logging
+import ctypes
+from ctypes import c_char_p, c_double, c_int, POINTER
 
 class CalculatorView:
     def __init__(self, root):
         self.root = root
         self.root.title("SimpleCalculatorMVVM")
-        self.viewmodel = CalculatorViewModel()
-        self.resources = {}
         self.config = self.load_config()
         self.apply_config()
+        self.resources = {}
+        self.setup_libraries()
         self.setup_resources()
         self.setup_ui()
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.history = ""
+
+    def setup_libraries(self):
+        try:
+            # Загрузка динамической библиотеки
+            self.lib = ctypes.CDLL("SimpleCalculatorMVVM/lib/libcalc.dylib")
+            # Определение типов для функций
+            self.lib.parse_expression.argtypes = [c_char_p, POINTER(c_int)]
+            self.lib.parse_expression.restype = POINTER(c_char_p)
+            self.lib.free_tokens.argtypes = [POINTER(c_char_p), c_int]
+            self.lib.evaluate_expression.argtypes = [c_char_p]
+            self.lib.evaluate_expression.restype = c_double
+            self.lib.append_history.argtypes = [c_char_p, c_char_p, c_char_p]
+            self.lib.append_history.restype = c_char_p
+            self.lib.clear_history.argtypes = [POINTER(c_char_p)]
+            self.lib.get_developer_info.restype = c_char_p
+        except OSError as e:
+            logging.error(f"Ошибка загрузки библиотеки: {str(e)}")
+            messagebox.showerror("Ошибка", f"Не удалось загрузить библиотеку: {str(e)}")
 
     def load_config(self):
-        """Загрузка конфигурационного файла с обработкой ошибок"""
         default_config = {
             "window": {"width": 500, "height": 750},
             "background_color": "#f0f0f0",
@@ -42,65 +61,53 @@ class CalculatorView:
         try:
             with open("SimpleCalculatorMVVM/config.json", "r") as f:
                 config = json.load(f)
-            # Проверка наличия всех обязательных ключей
             required_keys = ["window", "background_color", "font", "sound_enabled", "animation", "styles", "active_style"]
             for key in required_keys:
                 if key not in config:
-                    logging.error(f"Отсутствует ключ {key} в config.json. Используется значение по умолчанию.")
+                    logging.error(f"Отсутствует ключ {key} в config.json")
                     return default_config
             return config
         except FileNotFoundError:
-            logging.error("Файл config.json не найден. Используется конфигурация по умолчанию.")
-            messagebox.showwarning("Предупреждение", "Файл config.json не найден. Используется конфигурация по умолчанию.")
+            logging.error("Файл config.json не найден")
+            messagebox.showwarning("Предупреждение", "Файл config.json не найден")
             return default_config
         except json.JSONDecodeError:
-            logging.error("Неверный формат config.json. Используется конфигурация по умолчанию.")
-            messagebox.showerror("Ошибка", "Неверный формат config.json. Используется конфигурация по умолчанию.")
+            logging.error("Неверный формат config.json")
+            messagebox.showerror("Ошибка", "Неверный формат config.json")
             return default_config
         except Exception as e:
-            logging.error(f"Ошибка загрузки config.json: {str(e)}. Используется конфигурация по умолчанию.")
+            logging.error(f"Ошибка загрузки config.json: {str(e)}")
             messagebox.showerror("Ошибка", f"Ошибка загрузки config.json: {str(e)}")
             return default_config
 
     def apply_config(self):
-        """Применение настроек из конфигурации"""
         try:
             window_size = f"{self.config['window']['width']}x{self.config['window']['height']}"
             self.root.geometry(window_size)
             self.root.configure(bg=self.config['background_color'])
             self.active_style = self.config.get("active_style", "default")
             if self.active_style not in self.config["styles"]:
-                logging.warning(f"Стиль {self.active_style} не найден. Используется стиль default.")
+                logging.warning(f"Стиль {self.active_style} не найден")
                 self.active_style = "default"
         except Exception as e:
             logging.error(f"Ошибка применения конфигурации: {str(e)}")
 
     def setup_resources(self):
-        # Статическая загрузка
         try:
-            # Иконка окна
             self.root.iconbitmap("SimpleCalculatorMVVM/resources/icon.ico")
-
-            # Логотип
             self.resources['logo'] = ImageTk.PhotoImage(
                 Image.open("SimpleCalculatorMVVM/resources/logo.png").resize((60, 60), Image.Resampling.LANCZOS)
             )
-
-            # Шрифт из конфигурации
             self.resources['custom_font'] = font.Font(
                 family=self.config['font']['name'],
                 size=self.config['styles'][self.active_style]['font_size'],
                 weight="bold"
             )
-
-            # Курсоры
             self.resources['button_cursor'] = "hand2"
             self.resources['entry_cursor'] = "xterm"
-
         except Exception as e:
             messagebox.showerror("Ошибка", f"Ошибка загрузки ресурсов: {str(e)}")
 
-        # Динамическая загрузка звука
         if self.config['sound_enabled']:
             try:
                 pygame.mixer.init()
@@ -109,7 +116,6 @@ class CalculatorView:
             except Exception as e:
                 print(f"Ошибка инициализации звука: {str(e)}")
 
-        # Динамическая загрузка анимации
         self.resources['gif_frames'] = []
         self.resources['gif_index'] = 0
         try:
@@ -146,7 +152,6 @@ class CalculatorView:
                 print(f"Ошибка загрузки звука: {str(e)}")
 
     def setup_ui(self):
-        # Меню
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
         file_menu = tk.Menu(menubar, tearoff=0)
@@ -159,12 +164,10 @@ class CalculatorView:
         self.main_frame = tk.Frame(self.root, bg=self.config['styles'][self.active_style]['background_color'])
         self.main_frame.pack(padx=20, pady=10, fill="both", expand=True)
 
-        # Логотип
         logo_label = tk.Label(self.main_frame, image=self.resources['logo'],
                               bg=self.config['styles'][self.active_style]['background_color'])
         logo_label.grid(row=0, column=0, columnspan=5, pady=5)
 
-        # Поле ввода
         self.entry = tk.Entry(self.main_frame, width=28, font=("Helvetica", 16),
                               bd=0, bg="#ffffff", fg=self.config['styles'][self.active_style]['text_color'],
                               insertbackground=self.config['styles'][self.active_style]['text_color'],
@@ -172,7 +175,6 @@ class CalculatorView:
         self.entry.grid(row=1, column=0, columnspan=5, pady=10, ipady=10, sticky="ew")
         self.entry.focus_set()
 
-        # История
         self.history_frame = tk.Frame(self.main_frame, bg=self.config['styles'][self.active_style]['background_color'])
         self.history_frame.grid(row=2, column=0, columnspan=5, pady=10, sticky="ew")
         self.history = tk.Text(self.history_frame, height=6, width=28, font=("Helvetica", 12),
@@ -183,7 +185,6 @@ class CalculatorView:
         scrollbar.pack(side="right", fill="y")
         self.history['yscrollcommand'] = scrollbar.set
 
-        # Анимация
         if self.resources['gif_frames']:
             self.animation_label = tk.Label(self.main_frame, bg=self.config['styles'][self.active_style]['background_color'])
             self.animation_label.grid(row=3, column=0, columnspan=5, pady=10)
@@ -222,7 +223,6 @@ class CalculatorView:
                 col += 1
             row += 1
 
-        # Нижний ряд кнопок
         tk.Button(self.main_frame, text="C", width=5, height=2,
                   font=self.resources['custom_font'], bg=style['special_color'], fg=style['text_color'],
                   activebackground="#cc2e26", bd=0, relief="flat", command=self.clear,
@@ -246,9 +246,8 @@ class CalculatorView:
 
         style = self.config['styles'][self.active_style]
         dialog.configure(bg=style['background_color'])
-        tk.Label(dialog, text="SimpleCalculatorMVVM", font=self.resources['custom_font'],
-                 fg=style['text_color'], bg=style['background_color']).pack(pady=10)
-        tk.Label(dialog, text="Версия: 1.0\nАвтор: Карим Атажанов",
+        info = self.lib.get_developer_info().decode('utf-8')
+        tk.Label(dialog, text=info, font=self.resources['custom_font'],
                  fg=style['text_color'], bg=style['background_color']).pack(pady=10)
         tk.Button(dialog, text="Закрыть", command=dialog.destroy,
                   font=self.resources['custom_font'], bg=style['button_color'], fg=style['text_color']).pack(pady=10)
@@ -260,35 +259,38 @@ class CalculatorView:
                 self.resources['sound'].play()
 
         if char == '=':
-            result = self.viewmodel.evaluate()
-            self.update_entry()
-            self.update_history()
-            if self.viewmodel.get_error():
-                messagebox.showerror("Ошибка", f"Недопустимый ввод: {self.viewmodel.get_error()}")
+            try:
+                result = self.lib.evaluate_expression(self.entry.get().encode('utf-8'))
+                result_str = str(result)
+                self.entry.delete(0, tk.END)
+                self.entry.insert(tk.END, result_str)
+                new_history = self.lib.append_history(
+                    self.entry.get().encode('utf-8'),
+                    result_str.encode('utf-8'),
+                    self.history.encode('utf-8')
+                )
+                self.history = new_history.decode('utf-8')
+                self.update_history()
+            except Exception as e:
+                messagebox.showerror("Ошибка", f"Недопустимый ввод: {str(e)}")
         else:
-            self.viewmodel.append_input(char)
-            self.update_entry()
+            self.entry.insert(tk.END, char)
 
     def clear(self):
-        self.viewmodel.clear()
-        self.update_entry()
+        self.entry.delete(0, tk.END)
 
     def backspace(self):
-        self.viewmodel.backspace()
-        self.update_entry()
+        self.entry.delete(len(self.entry.get()) - 1, tk.END)
 
     def clear_history(self):
-        self.viewmodel.clear_history()
+        self.lib.clear_history(ctypes.byref(c_char_p(self.history.encode('utf-8'))))
+        self.history = ""
         self.update_history()
-
-    def update_entry(self):
-        self.entry.delete(0, tk.END)
-        self.entry.insert(tk.END, self.viewmodel.expression)
 
     def update_history(self):
         self.history.configure(state='normal')
         self.history.delete(1.0, tk.END)
-        self.history.insert(tk.END, self.viewmodel.get_history())
+        self.history.insert(tk.END, self.history)
         self.history.configure(state='disabled')
         self.history.see(tk.END)
 
