@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from operations import *
+import math
 
 # Фабрика операций (Factory Method)
 class OperationFactory:
@@ -37,7 +38,6 @@ class Calculator:
             self.root.geometry("500x650")
             self.root.resizable(False, False)
             self.root.configure(bg="#f0f0f0")
-            self.history_content = []
             self.operation_factory = OperationFactory()
             self.setup_ui()
             self.initialized = True
@@ -108,24 +108,22 @@ class Calculator:
                 self.history.configure(state='disabled')
                 self.history.see(tk.END)
             except Exception as e:
-                messagebox.showerror("Error", f"Invalid input: {str(e)}")
+                messagebox.showerror("Error", f"Недопустимый ввод: {str(e)}")
                 self.clear()
         else:
             self.entry.insert(tk.END, char)
 
     def evaluate_expression(self, expression):
-        # Простая обработка для демонстрации Factory Method
-        # В реальном приложении нужен полноценный парсер
-        tokens = expression.split()
-        if len(tokens) == 3:
-            a, op, b = float(tokens[0]), tokens[1], float(tokens[2])
-            operation = self.operation_factory.create_operation(op)
-            return operation.execute(a, b)
-        elif len(tokens) == 2:
-            op, a = tokens[0], float(tokens[1])
-            operation = self.operation_factory.create_operation(op)
-            return operation.execute(a)
-        raise ValueError("Неподдерживаемое выражение")
+        # Заменяем символы для совместимости с Python
+        expression = (expression.replace('^', '**')
+                              .replace('√', 'math.sqrt')
+                              .replace('sin', 'math.sin')
+                              .replace('cos', 'math.cos')
+                              .replace('tan', 'math.tan')
+                              .replace('ln', 'math.log'))
+        # Безопасный eval с ограниченным контекстом
+        result = eval(expression, {"math": math, "__builtins__": {}})
+        return result
 
     def clear(self):
         self.entry.delete(0, tk.END)
