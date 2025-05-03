@@ -1,50 +1,7 @@
-Руководство по использованию конфигурационного файла
+Руководство по настройке config.json
 Описание
-Конфигурационный файл SimpleCalculatorMVVM/config.json используется для настройки параметров оконного приложения SimpleCalculatorMVVM. Формат файла — JSON. Файл позволяет изменять внешний вид, размеры окна, шрифт, звук и стили интерфейса без перекомпиляции кода.
-Структура файла
-Файл содержит следующие параметры:
-
-window:
-width (int): Ширина окна (например, 500).
-height (int): Высота окна (например, 750).
-
-
-background_color (string): Цвет фона окна в формате HEX (например, "#f0f0f0").
-font:
-name (string): Название шрифта (например, "Helvetica").
-size (int): Размер шрифта (например, 12).
-
-
-sound_enabled (boolean): Включение/выключение звука (true или false).
-animation:
-width (int): Ширина анимации (например, 100).
-height (int): Высота анимации (например, 50).
-
-
-styles: Объект с различными стилями интерфейса:
-default: Стандартный стиль.
-high_contrast_light: Светлый режим для слабовидящих.
-high_contrast_dark: Темный режим для слабовидящих.
-male: Мужской стиль.
-female: Женский стиль.
-kids: Стиль для детей.
-youth: Стиль для молодежи.
-middle_age: Стиль для среднего возраста.
-elderly: Стиль для пожилых.
-Каждый стиль содержит:
-background_color (string): Цвет фона.
-button_color (string): Цвет кнопок цифр.
-operator_color (string): Цвет кнопок операторов.
-special_color (string): Цвет специальных кнопок ("C", "⌫", "CH").
-text_color (string): Цвет текста.
-font_size (int): Размер шрифта.
-
-
-
-
-active_style (string): Имя активного стиля (например, "default").
-
-Пример конфигурационного файла
+Файл config.json в папке SimpleCalculatorMVVM/ используется для настройки параметров калькулятора, включая размер окна, цвета, шрифты, звук, анимацию и стили.
+Структура config.json
 {
   "window": {
     "width": 500,
@@ -68,61 +25,48 @@ active_style (string): Имя активного стиля (например, "
       "special_color": "#ff3b30",
       "text_color": "#000000",
       "font_size": 12
-    },
-    "high_contrast_dark": {
-      "background_color": "#333333",
-      "button_color": "#555555",
-      "operator_color": "#ffaa00",
-      "special_color": "#ff5555",
-      "text_color": "#ffffff",
-      "font_size": 14
     }
   },
   "active_style": "default"
 }
 
-Инструкции по изменению настроек
+Описание ключей
 
-Откройте SimpleCalculatorMVVM/config.json в текстовом редакторе.
-Измените параметры:
-Для изменения размера окна: Измените window.width и window.height.
-Для изменения фона: Измените background_color или styles.<style>.background_color.
-Для смены стиля: Измените active_style на имя стиля (например, "high_contrast_dark").
-Для отключения звука: Установите sound_enabled в false.
-Для изменения анимации: Измените animation.width и animation.height.
+window: Размер окна (ширина, высота).
+background_color: Цвет фона окна (hex).
+font: Шрифт для текста (название, размер).
+sound_enabled: Включение/выключение звука кнопок (true/false).
+animation: Размер анимации (animation.gif).
+styles: Набор стилей (фон, кнопки, операторы, текст).
+active_style: Активный стиль (ключ из styles).
+
+Настройка
+
+Откройте SimpleCalculatorMVVM/config.json.
+Измените значения, например:
+Смените active_style на другой стиль.
+Измените background_color на #e0e0e0.
+Установите sound_enabled: false для отключения звука.
 
 
-Сохраните файл.
-Перезапустите приложение:python3 SimpleCalculatorMVVM/view.py
+Сохраните файл и перезапустите калькулятор:python3 SimpleCalculatorMVVM/view.py
 
 
 
 Обработка ошибок
 
-Если config.json не найден, приложение использует настройки по умолчанию и показывает предупреждение.
-Если формат JSON неверный, выводится сообщение об ошибке, и используются настройки по умолчанию.
-Если отсутствуют обязательные ключи, приложение переключается на конфигурацию по умолчанию.
-Ошибки записываются в SimpleCalculatorMVVM/calculator.log.
+Если config.json отсутствует или содержит ошибки, используется конфигурация по умолчанию.
+Логи ошибок записываются в SimpleCalculatorMVVM/calculator.log.
 
-Эффекты изменений
+Пример изменения стиля
+Добавьте новый стиль в styles:
+"dark": {
+  "background_color": "#333333",
+  "button_color": "#555555",
+  "operator_color": "#ff9500",
+  "special_color": "#ff3b30",
+  "text_color": "#ffffff",
+  "font_size": 12
+}
 
-Размер окна: Изменение window.width/height меняет размер окна.
-Цвет фона: Изменение background_color или styles.<style>.background_color меняет фон окна и элементов.
-Шрифт: Изменение font.name/styles.<style>.font_size меняет шрифт кнопок и текста.
-Звук: sound_enabled: false отключает звук для всех кнопок.
-Стили: Переключение active_style меняет цвета и шрифт для соответствия стилю (например, "kids" — яркие цвета, крупный шрифт).
-Анимация: Изменение animation.width/height меняет размер animation.gif.
-
-Примеры использования
-
-Для слабовидящих: Установите active_style: "high_contrast_dark" для темного режима с крупным шрифтом.
-Для детей: Установите active_style: "kids" для ярких цветов и шрифта 16.
-Для отключения звука: Установите sound_enabled: false.
-Для изменения размера окна: Установите window.width: 600, window.height: 800.
-
-Замечания
-
-Убедитесь, что цвета указаны в формате HEX (#RRGGBB).
-Шрифт (font.name) должен быть доступен в системе (например, "Helvetica", "Arial").
-Файл config.json должен находиться в папке SimpleCalculatorMVVM.
-
+Установите "active_style": "dark" и перезапустите калькулятор.

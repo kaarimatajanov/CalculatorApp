@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+build/
+dist/
+*.log
+*.o
+*.a
+*.dylib
+*.spec
+SimpleCalculatorMVVM/calculator
