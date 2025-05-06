@@ -15,11 +15,11 @@ class CalculatorView:
         self.config = self.load_config()
         self.apply_config()
         self.resources = {}
+        self.history = ""  # Строка для хранения истории
         self.setup_libraries()
         self.setup_resources()
         self.setup_ui()
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.history = ""
 
     def setup_libraries(self):
         try:
@@ -177,13 +177,13 @@ class CalculatorView:
 
         self.history_frame = tk.Frame(self.main_frame, bg=self.config['styles'][self.active_style]['background_color'])
         self.history_frame.grid(row=2, column=0, columnspan=5, pady=10, sticky="ew")
-        self.history = tk.Text(self.history_frame, height=6, width=28, font=("Helvetica", 12),
-                               bg="#ffffff", fg=self.config['styles'][self.active_style]['text_color'],
-                               state='disabled', bd=0)
-        self.history.pack(side="left", fill="both")
-        scrollbar = tk.Scrollbar(self.history_frame, orient="vertical", command=self.history.yview)
+        self.history_text = tk.Text(self.history_frame, height=6, width=28, font=("Helvetica", 12),
+                                   bg="#ffffff", fg=self.config['styles'][self.active_style]['text_color'],
+                                   state='disabled', bd=0)
+        self.history_text.pack(side="left", fill="both")
+        scrollbar = tk.Scrollbar(self.history_frame, orient="vertical", command=self.history_text.yview)
         scrollbar.pack(side="right", fill="y")
-        self.history['yscrollcommand'] = scrollbar.set
+        self.history_text['yscrollcommand'] = scrollbar.set
 
         if self.resources['gif_frames']:
             self.animation_label = tk.Label(self.main_frame, bg=self.config['styles'][self.active_style]['background_color'])
@@ -260,16 +260,17 @@ class CalculatorView:
 
         if char == '=':
             try:
-                result = self.lib.evaluate_expression(self.entry.get().encode('utf-8'))
-                result_str = str(result)
+                expr = self.entry.get().encode('utf-8')
+                result = self.lib.evaluate_expression(expr)
+                result_str = str(int(result)) if result.is_integer() else str(result)
                 self.entry.delete(0, tk.END)
                 self.entry.insert(tk.END, result_str)
                 new_history = self.lib.append_history(
-                    self.entry.get().encode('utf-8'),
+                    expr,
                     result_str.encode('utf-8'),
                     self.history.encode('utf-8')
                 )
-                self.history = new_history.decode('utf-8')
+                self.history = new_history.decode('utf-8') if new_history else self.history
                 self.update_history()
             except Exception as e:
                 messagebox.showerror("Ошибка", f"Недопустимый ввод: {str(e)}")
@@ -283,16 +284,15 @@ class CalculatorView:
         self.entry.delete(len(self.entry.get()) - 1, tk.END)
 
     def clear_history(self):
-        self.lib.clear_history(ctypes.byref(c_char_p(self.history.encode('utf-8'))))
         self.history = ""
         self.update_history()
 
     def update_history(self):
-        self.history.configure(state='normal')
-        self.history.delete(1.0, tk.END)
-        self.history.insert(tk.END, self.history)
-        self.history.configure(state='disabled')
-        self.history.see(tk.END)
+        self.history_text.configure(state='normal')
+        self.history_text.delete(1.0, tk.END)
+        self.history_text.insert(tk.END, self.history)
+        self.history_text.configure(state='disabled')
+        self.history_text.see(tk.END)
 
     def key_press(self, event):
         key = event.char
